@@ -1,0 +1,74 @@
+METHOD RK4
+
+STARTTIME = 0
+STOPTIME=10
+DT = 0.02
+
+
+INIT X1=990
+INIT X2=0
+INIT Z=0
+INIT C=10
+INIT TR=0
+INIT V=0
+INIT TotV=0
+INIT TotTR=0
+
+d/dT(X1)= theta-FVN-pe*(C*X1)*(1/N)-mu*X1     ;susceptible/naive
+
+d/dT(X2)= omega*alpha*Tr-pe*(C*X2)*(1/N)-FVT-mu*X2     ;susceptible SVR non-naive
+
+d/dT(Z)= pe*C*(1/N)*(delta*X1+beta*V-(1-xi)*Z)-mu*Z     ;immune
+
+d/dT(C)= pe*C*(1/N)*((1-xi)*Z+(1-beta)*V+(1-delta)*X1+X2)+omega*(1-alpha)*Tr-Fphi-mu*C    ;chronicly infected
+
+d/dT(TR)= Fphi- omega*TR-mu*TR      ;treated
+
+d/dT(V)= FVN+FVT-pe*C*V*(1/N)-mu*V      ;vaccinated
+
+d/dT(TotV)=FVN+FVT
+d/dT(TotTR)= omega*alpha*Tr ;those that are treated and have SVR
+
+; treatment of chronics
+Fphi=if phix<C then phix else C
+
+; vaccination of naive
+FVN= if VNx <X1 then VNx else X1
+
+; vaccination of treated
+FVT=if VNx=0 then VNx else k*omega*alpha*Tr ;k=0!!!! because we're not vaccinating after treatment only Naive 
+
+Pre= C/N
+AB=(Z+C)/N
+N= X1+X2+Z+C+TR+V
+
+ID=(1/N)*(pe*C*(1/N)*((1-xi)*Z+(1-beta)*V+(1-delta)*X1+X2))
+
+
+;POPULATION DYNAMICS
+theta= 85  ;injection rate
+mu= .085  ;death rate
+
+;INFECTION DYNAMICS
+delta= .26  ;infections that spontaneously clear
+pe= .213  ;infection rate
+xi= 0.8  ;reinfections resulting in spontaneous clearance  (immunity)
+
+;TREATMENT DYNAMICS
+alpha= .9  ;SVR
+beta= 0.5 ;vaccine efficacy
+k=0 ;set to zero to turn off post treatment vaccination
+phi=5  ;treatment rate
+phix= if Time < trx then 0 else phi
+trx=100
+omega= 4.3 ;treatment duration
+
+;VACCINATION DYNAMICS
+
+VNx= if Time < trx then 0 else VN
+VN= 0 ;annual naive vaccination number
+
+VTx= if Time < trx then 0 else VT
+VT= 0 ;annual post treatment vaccination number
+
+
